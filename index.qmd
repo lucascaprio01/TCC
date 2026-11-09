@@ -36,6 +36,40 @@ ojs_define(
 ```
 
 ```{ojs}
+//| label: grade-quadrada
+// Função auxiliar usada por TODOS os gráficos 2D/projetados.
+// Garante que 1 unidade em X ocupe exatamente os mesmos pixels que 1 unidade em Y
+// (escala 1:1) e que a grade tenha uma linha a cada 1 unidade, formando
+// quadrados de 1x1. Assim, órbitas circulares aparecem como círculos de verdade.
+grade_quadrada = function(xdom, ydom, xlabel, ylabel) {
+  const margem = {top: 25, right: 20, bottom: 45, left: 50};
+  const larguraMax = 700;   // largura total máxima do gráfico (px)
+  const pxMax = 26;         // tamanho máximo de 1 unidade (px)
+
+  const dx = xdom[1] - xdom[0];
+  const dy = ydom[1] - ydom[0];
+
+  // Pixels por unidade: o MESMO valor é usado nos dois eixos
+  const px = Math.min(pxMax, (larguraMax - margem.left - margem.right) / dx);
+
+  // Marcas (e linhas de grade) a cada 1 unidade
+  const marcas = (d) => Array.from({length: Math.floor(d[1] - d[0]) + 1}, (_, k) => d[0] + k);
+
+  return {
+    width: dx * px + margem.left + margem.right,
+    height: dy * px + margem.top + margem.bottom,
+    marginTop: margem.top,
+    marginRight: margem.right,
+    marginBottom: margem.bottom,
+    marginLeft: margem.left,
+    grid: true,
+    x: {domain: xdom, ticks: marcas(xdom), label: xlabel},
+    y: {domain: ydom, ticks: marcas(ydom), label: ylabel}
+  };
+}
+```
+
+```{ojs}
 //| label: controles-sim1
 viewof a_var = Inputs.range([1.2, 10], {
   value: 4, step: 0.1, label: "Semieixo maior (a)"
@@ -50,10 +84,8 @@ dados_orbita_a = angulos_globais.map(function(E) {
 })
 
 Plot.plot({
-  grid: true, width: 700, height: 400,
+  ...grade_quadrada([-15, 10], [-10, 10], "Distância X (R_T)", "Distância Y (R_T)"),
   color: { legend: true, domain: ["Terra", "Satélite"], range: ["#2b83ba", "#444444"] },
-  x: {domain: [-15, 10], label: "Distância X (R_T)"},
-  y: {domain: [-10, 10], label: "Distância Y (R_T)"},
   marks: [
     Plot.dot([{x: 0, y: 0, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
     Plot.line(dados_orbita_a, {x: "x", y: "y", stroke: "#888888", strokeWidth: 1.5, strokeDasharray: "4 4"}),
@@ -80,10 +112,8 @@ dados_orbita_e = angulos_globais.map(function(E) {
 })
 
 Plot.plot({
-  grid: true, width: 700, height: 400,
+  ...grade_quadrada([-12, 8], [-8, 8], "Distância X (R_T)", "Distância Y (R_T)"),
   color: { legend: true, domain: ["Terra", "Satélite"], range: ["#2b83ba", "#444444"] },
-  x: {domain: [-12, 8], label: "Distância X (R_T)"},
-  y: {domain: [-8, 8], label: "Distância Y (R_T)"},
   marks: [
     Plot.dot([{x: 0, y: 0, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
     Plot.line(dados_orbita_e, {x: "x", y: "y", stroke: "#888888", strokeWidth: 1.5, strokeDasharray: "4 4"}),
@@ -146,10 +176,8 @@ dados_equador_sim3 = angulos_globais.map(function(E) {
 centro_terra_sim3 = projetar3D_sim3(0, 0, 0, elevacao_cam3, azimute_cam3)
 
 Plot.plot({
-  grid: true, width: 700, height: 450,
+  ...grade_quadrada([-8, 8], [-8, 8], "Projeção Horizontal da Câmera", "Projeção Vertical da Câmera"),
   color: { legend: true, domain: ["Terra", "Órbita do Satélite", "Plano Equatorial"], range: ["#2b83ba", "#444444", "#cccccc"] },
-  x: {domain: [-8, 8], label: "Projeção Horizontal da Câmera"},
-  y: {domain: [-8, 8], label: "Projeção Vertical da Câmera"},
   marks: [
     Plot.line(dados_equador_sim3, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
     Plot.line(dados_orbita_i, {x: "x_tela", y: "y_tela", stroke: "#888888", strokeWidth: 2, strokeDasharray: "4 4"}),
@@ -220,10 +248,8 @@ eixo_referencia = [
 centro_terra_sim4 = projetar3D_sim4(0, 0, 0, elevacao_cam4, azimute_cam4)
 
 Plot.plot({
-  grid: true, width: 700, height: 450,
+  ...grade_quadrada([-9, 9], [-9, 9], "Projeção Horizontal da Câmera", "Projeção Vertical da Câmera"),
   color: { legend: true, domain: ["Terra", "Órbita do Satélite", "Plano Equatorial", "Referencial (Eixo X)"], range: ["#2b83ba", "#444444", "#cccccc", "#ff7f0e"] },
-  x: {domain: [-9, 9], label: "Projeção Horizontal da Câmera"},
-  y: {domain: [-9, 9], label: "Projeção Vertical da Câmera"},
   marks: [
     Plot.line(dados_equador_sim4, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
     Plot.line(eixo_referencia, {x: "x_tela", y: "y_tela", stroke: "#ff7f0e", strokeWidth: 2, strokeDasharray: "2 2"}),
@@ -307,14 +333,12 @@ vetor_perigeu = [
 ]
 
 Plot.plot({
-  grid: true, width: 700, height: 450,
+  ...grade_quadrada([-9, 9], [-9, 9], "Projeção Horizontal da Câmera", "Projeção Vertical da Câmera"),
   color: { 
     legend: true, 
     domain: ["Terra", "Plano Equatorial", "Linha dos Nodos", "Órbita", "Posição do Perigeu"], 
     range: ["#2b83ba", "#cccccc", "#2ca02c", "#888888", "#d62728"] 
   },
-  x: {domain: [-9, 9], label: "Projeção Horizontal da Câmera"},
-  y: {domain: [-9, 9], label: "Projeção Vertical da Câmera"},
   marks: [
     Plot.line(dados_equador_sim5, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
     Plot.line(linha_nodos_sim5, {x: "x_tela", y: "y_tela", stroke: "#2ca02c", strokeWidth: 2, strokeDasharray: "2 2"}),
@@ -376,14 +400,12 @@ vetor_satelite_sim6 = [
 ]
 
 Plot.plot({
-  grid: true, width: 700, height: 450,
+  ...grade_quadrada([-10, 8], [-8, 8], "Distância X (R_T)", "Distância Y (R_T)"),
   color: { 
     legend: true, 
     domain: ["Terra", "Satélite", "Órbita", "Vetor Posição (r)", "Linha do Perigeu (Ref)"],
     range: ["#2b83ba", "#444444", "#888888", "#9467bd", "#d62728"]
   },
-  x: {domain: [-10, 8], label: "Distância X (R_T)"},
-  y: {domain: [-8, 8], label: "Distância Y (R_T)"},
   marks: [
     Plot.line(dados_orbita_nu, {x: "x", y: "y", stroke: "#888888", strokeWidth: 1.5, strokeDasharray: "4 4"}),
     
@@ -442,14 +464,12 @@ regime_texto = alt_km <= 2000 ? "Regime Atual: LEO (Baixa Órbita)" : (alt_km < 
 cor_regime = alt_km <= 2000 ? "#2ca02c" : (alt_km < 35700 ? "#ff7f0e" : "#d62728")
 
 Plot.plot({
-  grid: true, width: 700, height: 500,
+  ...grade_quadrada([-8, 8], [-8, 8], "Distância X (Raios Terrestres)", "Distância Y (Raios Terrestres)"),
   color: { 
     legend: true, 
     domain: ["Terra", "Órbita do Satélite", "Limite LEO (2.000 km)", "Órbita GEO (35.786 km)"],
     range: ["#2b83ba", "#888888", "#2ca02c", "#d62728"]
   },
-  x: {domain: [-8, 8], label: "Distância X (Raios Terrestres)"},
-  y: {domain: [-8, 8], label: "Distância Y (Raios Terrestres)"},
   marks: [
     // Desenha as linhas de referência de LEO e GEO
     Plot.line(limite_leo_sim7, {x: "x", y: "y", stroke: "#2ca02c", strokeWidth: 1.5, strokeDasharray: "2 2"}),
@@ -534,14 +554,12 @@ eixo_polar_sim8 = [
 centro_terra_sim8 = projetar3D_sim8(0, 0, 0, elevacao_cam8, azimute_cam8)
 
 Plot.plot({
-  grid: true, width: 700, height: 450,
+  ...grade_quadrada([-9, 9], [-9, 9], "Projeção Horizontal da Câmera", "Projeção Vertical da Câmera"),
   color: { 
     legend: true, 
     domain: ["Terra", "Órbita Polar", "Plano Equatorial", "Eixo dos Polos"], 
     range: ["#2b83ba", "#888888", "#cccccc", "#17becf"] 
   },
-  x: {domain: [-9, 9], label: "Projeção Horizontal da Câmera"},
-  y: {domain: [-9, 9], label: "Projeção Vertical da Câmera"},
   marks: [
     Plot.line(dados_equador_sim8, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
     Plot.line(eixo_polar_sim8, {x: "x_tela", y: "y_tela", stroke: "#17becf", strokeWidth: 2, strokeDasharray: "2 2"}),
@@ -609,6 +627,20 @@ Plotly = require("plotly.js-dist@2")
 grafico_3d = {
   let container = html`<div style="width: 100%; height: 600px;"></div>`;
   
+  // Eixos cúbicos: MESMO intervalo (simétrico) e MESMO passo de grade nos 3 eixos,
+  // com aspectmode 'cube' => cada célula da grade é um quadrado/cubo de lado igual.
+  const eixo = (titulo, lim, passo) => ({
+    title: titulo, range: [-lim, lim], autorange: false,
+    tick0: 0, dtick: passo, showgrid: true
+  });
+  const cena = (lim, passo) => ({
+    xaxis: eixo('X (km)', lim, passo),
+    yaxis: eixo('Y (km)', lim, passo),
+    zaxis: eixo('Z (km)', lim, passo),
+    aspectmode: 'cube',
+    aspectratio: {x: 1, y: 1, z: 1}
+  });
+
   // Se o estado for reset, desenhamos apenas a Terra vazia
   if (dados_simulacao.length === 0) {
     let trace_terra_vazia = {
@@ -618,12 +650,7 @@ grafico_3d = {
     };
     let layout_vazio = {
       margin: { l: 0, r: 0, b: 0, t: 10 },
-      scene: {
-        xaxis: { title: 'X (km)', range: [-10000, 10000] },
-        yaxis: { title: 'Y (km)', range: [-10000, 10000] },
-        zaxis: { title: 'Z (km)', range: [-10000, 10000] },
-        aspectmode: 'cube'
-      },
+      scene: cena(10000, 2000),
       annotations: [{
         text: "Aguardando Simulação...",
         showarrow: false,
@@ -658,14 +685,18 @@ grafico_3d = {
     marker: { color: 'gray', size: 5 }
   };
 
+  // Limite comum aos 3 eixos (inclui a Terra na origem) e passo "redondo" (1, 2 ou 5 x 10^n)
+  const maxAbs = [x_vals, y_vals, z_vals]
+    .flat()
+    .reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+  const bruto = Math.max(maxAbs, 1) / 4;
+  const p10 = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const passo = [1, 2, 5, 10].map(k => k * p10).find(v => v >= bruto);
+  const lim = Math.ceil(Math.max(maxAbs, 1) / passo) * passo;
+
   let layout = {
     margin: { l: 0, r: 0, b: 0, t: 10 },
-    scene: {
-      xaxis: { title: 'X (km)' },
-      yaxis: { title: 'Y (km)' },
-      zaxis: { title: 'Z (km)' },
-      aspectmode: 'data'
-    }
+    scene: cena(lim, passo)
   };
 
   Plotly.newPlot(container, [trace_orbita, trace_terra, trace_inicio], layout);
