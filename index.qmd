@@ -1,6 +1,7 @@
 ---
 title: "Guia Didático Interativo para o Ensino de Mecânica Orbital"
 author: "Lucas Caprio Ribeiro"
+lang: pt
 format:
   html:
     theme: cosmo
@@ -15,6 +16,17 @@ jupyter: python3
 
 ## O Semieixo Maior ($a$) e a Energia Orbital
 
+::: {.callout-tip title="Questão Problema"}
+Se dois satélites orbitam a Terra em altitudes diferentes, qual deles necessita de maior velocidade e qual possui o maior período orbital (tempo para dar uma volta completa)? Como o tamanho da órbita se relaciona com a energia mecânica do satélite?
+:::
+
+O semieixo maior ($a$) representa a metade do diâmetro principal de uma órbita elíptica, definindo a escala espacial e a dimensão geométrica da trajetória. De acordo com o Problema dos Dois Corpos, a energia mecânica específica total ($\varepsilon$) de uma órbita depende exclusivamente do semieixo maior: 
+
+$$\varepsilon = \frac{v^2}{2} - \frac{\mu}{r} = -\frac{\mu}{2a}$$ onde $\mu = GM$ é o parâmetro gravitacional padrão da Terra ($\approx 3,986 \times 10^{14}\text{ m}^3/\text{s}^2$) e $r$ é a distância geocêntrica instantânea.
+
+Dessa relação deriva-se a Equação da Vis-Viva, que fornece o módulo da velocidade orbital instantânea $v$ em qualquer ponto $r$: $$v^2 = \mu \left( \frac{2}{r} - \frac{1}{a} \right)$$Pela Terceira Lei de Kepler (Lei dos Períodos), o quadrado do período orbital ($T^2$) é diretamente proporcional ao cubo do semieixo maior ($a^3$): $$T^2 = \frac{4\pi^2}{\mu} a^3$$
+
+Na simulação a seguir, utilize o controle deslizante Semieixo maior (a). Mantenha a excentricidade fixa ($e = 0,3$). Observe a variação no tamanho da elipse.
 ```{python}
 #| label: preparacao-python
 import math
@@ -94,8 +106,42 @@ Plot.plot({
 })
 ```
 
-## A Excentricidade ($e$) e a Geometria das Cônicas
+**Questões Investigativas**
 
+1. **[Diferenciação Progressiva]** Aumente o valor de $a$ de $1.2\,R_T$ para $6.0\,R_T$. O que acontece com o tamanho da elipse e com o tempo necessário para o satélite completar uma volta? Justifique com base na Terceira Lei de Kepler. ($R_T = 6371 \text{km}$)
+
+2. **[Análise Energética]** À medida que o semieixo maior aumenta, a energia mecânica específica ($\varepsilon$) torna-se mais positiva (menos negativa) ou mais negativa? O que isso indica sobre a energia requerida para colocar um satélite em uma órbita mais alta?
+
+## A Excentricidade ($e$) e a Geometria das Cônicas
+::: {.callout-tip title="Questão Problema"}
+A órbita da Terra ao redor do Sol é uma elipse muito "achatada" ou quase um círculo? A variação da distância entre a Terra e o Sol ao longo do ano é a causa primária das estações do ano?
+:::
+
+A excentricidade ($e$) é o parâmetro adimensional que mede o "grau de achatamento" ou o desvio de uma seção cônica em relação a uma circunferência perfeita:
+
+- $e = 0$: Órbita circular perfeita.
+
+- $0 < e < 1$: Órbita elíptica.
+
+- $e = 1$: Trajetória parabólica.
+
+- $e > 1$: Trajetória hiperbólica.
+
+A equação da cônica em coordenadas polares centradas no foco é dada por: 
+
+$$r(\nu) = \frac{a(1 - e^2)}{1 + e \cos \nu},$$ 
+
+onde $\nu$ é a anomalia verdadeira. A distância de máxima aproximação (perigeu, $r_p$) e de máximo afastamento (apogeu, $r_a$) são expressas por:
+
+ $$r_p = a(1 - e) \quad \text{e} \quad r_a = a(1 + e).$$
+ 
+ Pela Conservação do Momento Angular Específico ($\vec{h} = \vec{r} \times \vec{v} = \text{constante}$), a velocidade orbital no perigeu ($v_p$) é maior que no apogeu ($v_a$) para trajetórias elípticas:
+ 
+ $$\frac{v_p}{v_a} = \frac{1 + e}{1 - e}$$
+ 
+Superação de Concepção Alternativa: Ilustrações em livros didáticos costumam representar a órbita da Terra com excentricidade excessivamente acentuada, induzindo a ideia incorreta de que as estações do ano seriam causadas pela aproximação ou afastamento do Sol. Na realidade, a excentricidade terrestre é de apenas $e \approx 0,017$, tornando a órbita visualmente indistinguível de um círculo.
+
+Na simulação a seguir, altere a excentricidade de $e = 0,00$ até $e = 0,90$, mantendo $a$ constante. Observe o afastamento entre os focos e o deslocamento do perigeu e apogeu em relação ao centro da Terra.
 
 ```{ojs}
 //| label: controles-sim2
@@ -121,11 +167,32 @@ Plot.plot({
   ]
 })
 ```
+**Questões Investigativas**
+
+1. **[Desconstrução de Mitos]** Ajuste a excentricidade para $e = 0,017$ na simulação. A órbita aparenta ser uma elipse achatada ou um círculo? Discuta por que a explicação das estações do ano baseada na distância Sol-Terra é fisicamente incorreta.
+
+2. **[Conservação do Momento Angular]** Com os valores $e = 0,60$ e $a = 5,0$, calcule a razão $v_p / v_a$. Verifique como essa variação de velocidade se relaciona com a Segunda Lei de Kepler (Lei das Áreas).
 
 # Orientação Espacial Tridimensional (Ângulos de Euler)
 
 ## A Inclinação Orbital ($i$) e o Plano Equatorial
+::: {.callout-tip title="Questão Problema"}
+O que significa dizer que um satélite possui uma "órbita polar" ou uma "órbita equatorial"? Como o ângulo do plano orbital afeta as regiões da Terra sobre as quais o satélite consegue passar?
+:::
 
+A inclinação ($i$) é o ângulo medido entre o plano orbital do satélite e o plano equatorial de referência da Terra ($0^\circ \le i \le 180^\circ$):
+
+- Órbita Equatorial ($i = 0^\circ$ ou $i = 180^\circ$): O plano da órbita coincide com o plano equatorial terrestre.
+
+- Órbita Polar ($i = 90^\circ$): O plano orbital passa diretamente sobre os polos geográficos.
+
+- Órbita Prógrada ($0^\circ \le i < 90^\circ$): O satélite orbita no mesmo sentido de rotação da Terra (Oeste para Leste).
+
+- Órbita Retrógrada ($90^\circ < i \le 180^\circ$): O satélite orbita em sentido oposto à rotação terrestre.
+
+A inclinação determina as latitudes máximas ao Norte e ao Sul que a projeção da órbita no solo (ground track) consegue alcançar.
+
+Na simulação a seguir, altere a inclinação $i$ de $0^\circ$ a $180^\circ$ na cena 3D. Observe o basculamento do plano orbital em relação ao equador terrestre.
 
 ```{ojs}
 //| label: controles-sim3
@@ -189,6 +256,13 @@ Plot.plot({
 ```
 
 ## A Ascensão Reta do Nó Ascendente ($\Omega$)
+A Ascensão Reta do Nó Ascendente ($\Omega$ ou RAAN) é o ângulo medido no plano equatorial entre a direção de referência inercial, o Ponto Vernal ($\gamma$) (equinócio de primavera), e o Nó Ascendente. O nó ascendente é o ponto onde o satélite cruza o plano equatorial vindo do hemisfério Sul em direção ao hemisfério Norte ($0^\circ \le \Omega < 360^\circ$).
+
+A alteração de $\Omega$ promove uma rotação do plano orbital ao redor do eixo polar terrestre (eixo Z inercial).
+
+Na simulação a seguir, altere o parâmetro $\Omega$ de $0^\circ$ a $360^\circ$ mantendo $i = 45^\circ$. Observe como a linha dos nós gira no plano equatorial sem alterar a inclinação da órbita.
+
+
 ```{ojs}
 //| label: controles-sim4
 viewof raan_graus = Inputs.range([0, 360], {
@@ -261,7 +335,17 @@ Plot.plot({
   ]
 })
 ```
+**Questões Investigativas**
+
+1. **[Orientação Espacial]** Explique a diferença entre a inclinação ($i$) e a ascensão reta do nó ascendente ($\Omega$). Qual deles define a inclinação do plano e qual define a rotação da linha dos nós no equador?
+
 ## O Argumento do Perigeu ($\omega$)
+O Argumento do Perigeu ($\omega$) é o ângulo medido dentro do plano orbital entre o nó ascendente e a direção do perigeu (ponto de máxima aproximação) ($0^\circ \le \omega < 360^\circ$).
+
+Enquanto $\Omega$ orienta o plano no espaço inercial, $\omega$ orienta a própria elipse dentro do seu plano orbital.
+
+Na Simulação a seguir, altere $\omega$ de $0^\circ$ a $360^\circ$ em uma órbita elíptica ($e = 0,5$). Observe a rotação da elipse e o deslocamento do perigeu e apogeu.
+
 ```{ojs}
 //| label: controles-sim5
 viewof arg_perigeu = Inputs.range([0, 360], {
@@ -358,9 +442,25 @@ Plot.plot({
   ]
 })
 ```
+**Questões Investigativas**
+
+1. **[Aplicações Práticas]** Se ajustarmos $\omega = 270^\circ$, em qual hemisfério (Norte ou Sul) o apogeu estará localizado? Em qual hemisfério o satélite passará a maior parte do seu tempo orbital?
+
 # Dinâmica Temporal e Posição Instantânea
 
 ## A Anomalia Verdadeira ($\nu$) e o Movimento em Órbita
+A Anomalia Verdadeira ($\nu$ ou $f$) é o ângulo polar instantâneo medido no plano orbital a partir da direção do perigeu até a posição atual do satélite ($0^\circ \le \nu < 360^\circ$):
+
+- $\nu = 0^\circ$: Satélite no perigeu (máxima velocidade, menor distância).
+
+- $\nu = 180^\circ$: Satélite no apogeu (mínima velocidade, maior distância).
+
+A determinação da posição temporal exige a resolução da Equação de Kepler via Anomalia Média ($M$) e Anomalia Excêntrica ($u$):
+
+ $$M = u - e \sin u$$
+
+Na simulação a seguir, mova o controle deslizante de $\nu$ de $0^\circ$ a $360^\circ$ e observe o deslocamento do satélite e do vetor posição $\vec{r}$ ao longo da órbita.
+
 ```{ojs}
 //| label: controles-sim6
 viewof nu_graus = Inputs.range([0, 360], {
@@ -421,9 +521,50 @@ Plot.plot({
   ]
 })
 ```
+
+**Questões Investigativas**
+
+1. **[Análise da Velocidade]** Conforme a anomalia verdadeira varia de $\nu = 0^\circ$ (perigeu) para $\nu = 180^\circ$ (apogeu), o movimento do satélite é acelerado ou retardado? Qual a orientação do ângulo entre a velocidade e a aceleração gravitacional?
+
 # Regimes de Órbitas Terrestres e Aplicações Aeroespaciais
 
 ## Análise Comparativa – LEO, MEO, GEO e Polar
+Na astrodinâmica e na engenharia espacial, as órbitas terrestres são classificadas em quatro regimes principais com base na altitude, inclinação e período:
+
+**1. Órbita Terrestre Baixa (LEO - Low Earth Orbit):**
+
+  - Altitude: $\sim 160\text{ km}$ a $2.000\text{ km}$.
+
+  - Velocidade e Período: Alta velocidade ($\sim 7,8\text{ km/s}$) e período curto ($\sim 90\text{ minutos}$).
+
+  - Aplicações: Estação Espacial Internacional (ISS), satélites de observação e fotografia.
+  
+**2. Órbita Terrestre Média (MEO - Medium Earth Orbit):**
+
+  - Altitude: $\sim 2.000\text{ km}$ a $35.786\text{ km}$ (típica de $\sim 20.200\text{ km}$).
+  
+  - Período: Típico de $12\text{ horas}$ (semissíncrona).
+  
+  - Aplicações: Constelações de navegação por satélite (GPS, GLONASS, Galileo).
+  
+**3. Órbita Geoestacionária (GEO - Geostationary Earth Orbit):**
+
+  - Altitude e Geometria: Circular equatorial ($i = 0^\circ$, $e = 0$) a $a \approx 42.164\text{ km}$ ($z \approx 35.786\text{ km}$).
+  
+  - Período: Exatamente $24\text{ horas siderais}$ ($86.164\text{ s}$).
+  
+  - Propriedade: Move-se com a mesma velocidade angular da Terra, permanecendo fixa em relação a um ponto no equador.
+  
+  - Aplicações: Telecomunicações, transmissão de TV e meteorologia contínua.
+  
+**4. Órbita Polar:**
+
+  - Inclinação: $i \approx 90^\circ$.
+
+  - Aplicações: Como a Terra gira por baixo do plano orbital, o satélite varre e mapeia 100% da superfície ao longo de sucessivas voltas.
+
+Na simulação a seguir, ative a visualização comparativa tridimensional. Alterne entre os regimes LEO, MEO, GEO e Polar e observe as diferenças de escala, altitude e velocidade de translação em relação ao globo terrestre.
+
 ```{ojs}
 //| label: controles-sim7
 viewof alt_km = Inputs.range([160, 36000], {
@@ -574,7 +715,24 @@ Plot.plot({
 })
 ```
 
-# Aplicação Realista e Rastreamento de Satélites
+**Questões Investigativas**
+
+1. **[Engenharia Aeroespacial]** Por que as antenas de TV via satélite (GEO) são fixas nas residências, enquanto antenas para rastrear a Estação Espacial Internacional (LEO) precisam ser motorizadas?
+
+2. **[Análise Comparativa]** Se quisermos monitorar o desmatamento na Amazônia e o derretimento nos polos, qual regime orbital devemos escolher (GEO ou Polar)? Justifique.
+
+# Aplicação em Três Dimensões
+
+::: {.callout-note title="Proposta de Ação"}
+Com o auxílio de seu professor, utilizando o site Horizons System, procure as efemérides do satélite ISS (International Space Station) e substitua-os no simulador a seguir.
+:::
+
+::: {.callout-warning title="Atenção!"}
+Utilize o sistema geocêntrico como centro de coordenadas e "Vector Table" como tipo de efemérides.
+:::
+
+**Observação**: É possível utilizar o simulador para qualquer outro corpo que orbite a Terra. Para isso, pode-se usar o mesmo site e procurar efemérides de outros corpos.
+
 
 ```{ojs}
 //| label: controles
