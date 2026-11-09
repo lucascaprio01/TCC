@@ -2,6 +2,10 @@
 title: "Guia Didático Interativo para o Ensino de Mecânica Orbital"
 author: "Lucas Caprio Ribeiro"
 lang: pt
+bibliography: referencias.bib
+nocite: |
+    @*
+csl: abnt.csl
 format:
   html:
     theme: cosmo
@@ -9,6 +13,7 @@ format:
     toc-depth: 3
     code-fold: show
     code-tools: true
+
 jupyter: python3
 ---
 
@@ -969,3 +974,7 @@ dados_simulacao = {
   return res;
 }
 ```
+
+# Referências
+::: {#refs}
+:::
