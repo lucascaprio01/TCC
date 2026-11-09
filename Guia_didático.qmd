@@ -1,0 +1,782 @@
+---
+title: "Guia Didático Interativo para o Ensino de Mecânica Orbital"
+author: "Lucas Caprio Ribeiro"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    code-fold: show
+    code-tools: true
+jupyter: python3
+---
+
+# Parâmetros de Forma e Dimensão Orbital (Plano Orbital)
+
+## O Semieixo Maior ($a$) e a Energia Orbital
+
+```{python}
+#| label: preparacao-python
+import math
+import numpy as np
+
+# Array de ângulos único para rodar todas as simulações
+angulos_base = np.linspace(0, 2 * math.pi, 200).tolist()
+
+# Exporta todas as variáveis fixas de uma só vez para o OJS
+ojs_define(
+  angulos_globais = angulos_base,
+  e_fixo_sim1 = 0.3,
+  a_fixo_sim2 = 5,
+  a_fixo_sim3 = 5,
+  e_fixo_sim3 = 0.0,
+  a_fixo_sim4 = 5,
+  i_fixo_sim4 = 45 # Inclinação em 45 graus para ver o RAAN claramente
+)
+```
+
+```{ojs}
+//| label: controles-sim1
+viewof a_var = Inputs.range([1.2, 10], {
+  value: 4, step: 0.1, label: "Semieixo maior (a)"
+})
+
+//| label: grafico-sim1
+dados_orbita_a = angulos_globais.map(function(E) {
+  return {
+    x: (a_var * Math.cos(E)) - (a_var * e_fixo_sim1),
+    y: a_var * Math.sqrt(1 - Math.pow(e_fixo_sim1, 2)) * Math.sin(E)
+  };
+})
+
+Plot.plot({
+  grid: true, width: 700, height: 400,
+  color: { legend: true, domain: ["Terra", "Satélite"], range: ["#2b83ba", "#444444"] },
+  x: {domain: [-15, 10], label: "Distância X (R_T)"},
+  y: {domain: [-10, 10], label: "Distância Y (R_T)"},
+  marks: [
+    Plot.dot([{x: 0, y: 0, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.line(dados_orbita_a, {x: "x", y: "y", stroke: "#888888", strokeWidth: 1.5, strokeDasharray: "4 4"}),
+    Plot.dot([{x: dados_orbita_a[0].x, y: dados_orbita_a[0].y, tipo: "Satélite"}], {x: "x", y: "y", r: 5, fill: "tipo"})
+  ]
+})
+```
+
+## A Excentricidade ($e$) e a Geometria das Cônicas
+
+
+```{ojs}
+//| label: controles-sim2
+viewof e_var = Inputs.range([0, 0.95], {
+  value: 0.3, step: 0.01, label: "Excentricidade (e)"
+})
+
+//| label: grafico-sim2
+dados_orbita_e = angulos_globais.map(function(E) {
+  return {
+    x: (a_fixo_sim2 * Math.cos(E)) - (a_fixo_sim2 * e_var),
+    y: a_fixo_sim2 * Math.sqrt(1 - Math.pow(e_var, 2)) * Math.sin(E)
+  };
+})
+
+Plot.plot({
+  grid: true, width: 700, height: 400,
+  color: { legend: true, domain: ["Terra", "Satélite"], range: ["#2b83ba", "#444444"] },
+  x: {domain: [-12, 8], label: "Distância X (R_T)"},
+  y: {domain: [-8, 8], label: "Distância Y (R_T)"},
+  marks: [
+    Plot.dot([{x: 0, y: 0, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.line(dados_orbita_e, {x: "x", y: "y", stroke: "#888888", strokeWidth: 1.5, strokeDasharray: "4 4"}),
+    Plot.dot([{x: dados_orbita_e[0].x, y: dados_orbita_e[0].y, tipo: "Satélite"}], {x: "x", y: "y", r: 5, fill: "tipo"})
+  ]
+})
+```
+
+# Orientação Espacial Tridimensional (Ângulos de Euler)
+
+## A Inclinação Orbital ($i$) e o Plano Equatorial
+
+
+```{ojs}
+//| label: controles-sim3
+viewof i_graus = Inputs.range([0, 180], {
+  value: 45, step: 1, label: "Inclinação da Órbita (graus)"
+})
+
+viewof elevacao_cam3 = Inputs.range([0, 90], {
+  value: 20, step: 1, label: "Elevação da Câmera (graus)"
+})
+
+viewof azimute_cam3 = Inputs.range([0, 360], {
+  value: 30, step: 1, label: "Azimute da Câmera (graus)"
+})
+
+//| label: grafico-sim3
+projetar3D_sim3 = function(x, y, z, elev_deg, azim_deg) {
+  let el = elev_deg * Math.PI / 180;
+  let az = azim_deg * Math.PI / 180;
+  
+  let x_rot = x * Math.cos(az) - y * Math.sin(az);
+  let y_rot = x * Math.sin(az) + y * Math.cos(az);
+  
+  let x_tela = x_rot;
+  let y_tela = z * Math.cos(el) + y_rot * Math.sin(el);
+  
+  return {x_tela, y_tela};
+}
+
+dados_orbita_i = angulos_globais.map(function(E) {
+  let x_plano = a_fixo_sim3 * Math.cos(E);
+  let y_plano = a_fixo_sim3 * Math.sin(E);
+  let i_rad = i_graus * Math.PI / 180;
+  
+  let x3d = x_plano;
+  let y3d = y_plano * Math.cos(i_rad);
+  let z3d = y_plano * Math.sin(i_rad);
+  
+  return projetar3D_sim3(x3d, y3d, z3d, elevacao_cam3, azimute_cam3);
+})
+
+dados_equador_sim3 = angulos_globais.map(function(E) {
+  let x3d = (a_fixo_sim3 + 1) * Math.cos(E);
+  let y3d = (a_fixo_sim3 + 1) * Math.sin(E);
+  return projetar3D_sim3(x3d, y3d, 0, elevacao_cam3, azimute_cam3);
+})
+
+centro_terra_sim3 = projetar3D_sim3(0, 0, 0, elevacao_cam3, azimute_cam3)
+
+Plot.plot({
+  grid: true, width: 700, height: 450,
+  color: { legend: true, domain: ["Terra", "Órbita do Satélite", "Plano Equatorial"], range: ["#2b83ba", "#444444", "#cccccc"] },
+  x: {domain: [-8, 8], label: "Projeção Horizontal da Câmera"},
+  y: {domain: [-8, 8], label: "Projeção Vertical da Câmera"},
+  marks: [
+    Plot.line(dados_equador_sim3, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
+    Plot.line(dados_orbita_i, {x: "x_tela", y: "y_tela", stroke: "#888888", strokeWidth: 2, strokeDasharray: "4 4"}),
+    Plot.dot([{x: centro_terra_sim3.x_tela, y: centro_terra_sim3.y_tela, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.dot([{x: dados_orbita_i[0].x_tela, y: dados_orbita_i[0].y_tela, tipo: "Órbita do Satélite"}], {x: "x", y: "y", r: 5, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Plano Equatorial"}], {x: "x", y: "y", r: 0, fill: "tipo"})
+  ]
+})
+```
+
+## A Ascensão Reta do Nó Ascendente ($\Omega$)
+```{ojs}
+//| label: controles-sim4
+viewof raan_graus = Inputs.range([0, 360], {
+  value: 0, step: 1, label: "Ascensão Reta do Nó Ascendente (RAAN)"
+})
+
+viewof elevacao_cam4 = Inputs.range([0, 90], {
+  value: 30, step: 1, label: "Elevação da Câmera (graus)"
+})
+
+viewof azimute_cam4 = Inputs.range([0, 360], {
+  value: 45, step: 1, label: "Azimute da Câmera (graus)"
+})
+
+//| label: grafico-sim4
+projetar3D_sim4 = function(x, y, z, elev_deg, azim_deg) {
+  let el = elev_deg * Math.PI / 180;
+  let az = azim_deg * Math.PI / 180;
+  let x_rot = x * Math.cos(az) - y * Math.sin(az);
+  let y_rot = x * Math.sin(az) + y * Math.cos(az);
+  let x_tela = x_rot;
+  let y_tela = z * Math.cos(el) + y_rot * Math.sin(el);
+  return {x_tela, y_tela};
+}
+
+dados_orbita_raan = angulos_globais.map(function(E) {
+  let x_plano = a_fixo_sim4 * Math.cos(E);
+  let y_plano = a_fixo_sim4 * Math.sin(E);
+  
+  // 1. Aplica a inclinação fixa (Eixo X)
+  let i_rad = i_fixo_sim4 * Math.PI / 180;
+  let x_inc = x_plano;
+  let y_inc = y_plano * Math.cos(i_rad);
+  let z_inc = y_plano * Math.sin(i_rad);
+  
+  // 2. Aplica o RAAN girando o sistema pelo Eixo Z (Polos)
+  let raan_rad = raan_graus * Math.PI / 180;
+  let x3d = x_inc * Math.cos(raan_rad) - y_inc * Math.sin(raan_rad);
+  let y3d = x_inc * Math.sin(raan_rad) + y_inc * Math.cos(raan_rad);
+  let z3d = z_inc;
+  
+  return projetar3D_sim4(x3d, y3d, z3d, elevacao_cam4, azimute_cam4);
+})
+
+dados_equador_sim4 = angulos_globais.map(function(E) {
+  let x3d = (a_fixo_sim4 + 1.5) * Math.cos(E);
+  let y3d = (a_fixo_sim4 + 1.5) * Math.sin(E);
+  return projetar3D_sim4(x3d, y3d, 0, elevacao_cam4, azimute_cam4);
+})
+
+// Linha fixa do Ponto Vernal (Eixo X) para termos referencial de giro
+eixo_referencia = [
+  projetar3D_sim4(0, 0, 0, elevacao_cam4, azimute_cam4),
+  projetar3D_sim4(a_fixo_sim4 + 2.5, 0, 0, elevacao_cam4, azimute_cam4)
+]
+
+centro_terra_sim4 = projetar3D_sim4(0, 0, 0, elevacao_cam4, azimute_cam4)
+
+Plot.plot({
+  grid: true, width: 700, height: 450,
+  color: { legend: true, domain: ["Terra", "Órbita do Satélite", "Plano Equatorial", "Referencial (Eixo X)"], range: ["#2b83ba", "#444444", "#cccccc", "#ff7f0e"] },
+  x: {domain: [-9, 9], label: "Projeção Horizontal da Câmera"},
+  y: {domain: [-9, 9], label: "Projeção Vertical da Câmera"},
+  marks: [
+    Plot.line(dados_equador_sim4, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
+    Plot.line(eixo_referencia, {x: "x_tela", y: "y_tela", stroke: "#ff7f0e", strokeWidth: 2, strokeDasharray: "2 2"}),
+    Plot.line(dados_orbita_raan, {x: "x_tela", y: "y_tela", stroke: "#888888", strokeWidth: 2, strokeDasharray: "4 4"}),
+    Plot.dot([{x: centro_terra_sim4.x_tela, y: centro_terra_sim4.y_tela, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.dot([{x: dados_orbita_raan[0].x_tela, y: dados_orbita_raan[0].y_tela, tipo: "Órbita do Satélite"}], {x: "x", y: "y", r: 5, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Plano Equatorial"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Referencial (Eixo X)"}], {x: "x", y: "y", r: 0, fill: "tipo"})
+  ]
+})
+```
+## O Argumento do Perigeu ($\omega$)
+```{ojs}
+//| label: controles-sim5
+viewof arg_perigeu = Inputs.range([0, 360], {
+  value: 0, step: 1, label: "Argumento do Perigeu (graus)"
+})
+
+viewof elevacao_cam5 = Inputs.range([0, 90], {
+  value: 30, step: 1, label: "Elevação da Câmera (graus)"
+})
+
+viewof azimute_cam5 = Inputs.range([0, 360], {
+  value: 45, step: 1, label: "Azimute da Câmera (graus)"
+})
+
+//| label: grafico-sim5
+projetar3D_sim5 = function(x, y, z, elev_deg, azim_deg) {
+  let el = elev_deg * Math.PI / 180;
+  let az = azim_deg * Math.PI / 180;
+  let x_rot = x * Math.cos(az) - y * Math.sin(az);
+  let y_rot = x * Math.sin(az) + y * Math.cos(az);
+  let x_tela = x_rot;
+  let y_tela = z * Math.cos(el) + y_rot * Math.sin(el);
+  return {x_tela, y_tela};
+}
+
+// Variáveis fixas exclusivas para a simulação 5
+a_fixo_sim5 = 5;
+e_fixo_sim5 = 0.6;
+i_fixo_sim5 = 45;
+
+dados_orbita_arg = angulos_globais.map(function(E) {
+  // 1. Órbita no plano 2D padrão
+  let x0 = a_fixo_sim5 * Math.cos(E) - (a_fixo_sim5 * e_fixo_sim5);
+  let y0 = a_fixo_sim5 * Math.sqrt(1 - Math.pow(e_fixo_sim5, 2)) * Math.sin(E);
+  
+  // 2. Rotaciona a órbita pelo Argumento do Perigeu (eixo Z do plano orbital)
+  let w_rad = arg_perigeu * Math.PI / 180;
+  let x1 = x0 * Math.cos(w_rad) - y0 * Math.sin(w_rad);
+  let y1 = x0 * Math.sin(w_rad) + y0 * Math.cos(w_rad);
+  
+  // 3. Aplica a inclinação fixa (gira no eixo X)
+  let i_rad = i_fixo_sim5 * Math.PI / 180;
+  let x2 = x1;
+  let y2 = y1 * Math.cos(i_rad);
+  let z2 = y1 * Math.sin(i_rad);
+  
+  return projetar3D_sim5(x2, y2, z2, elevacao_cam5, azimute_cam5);
+})
+
+// Equador para referência
+dados_equador_sim5 = angulos_globais.map(function(E) {
+  let x3d = (a_fixo_sim5 + 1.5) * Math.cos(E);
+  let y3d = (a_fixo_sim5 + 1.5) * Math.sin(E);
+  return projetar3D_sim5(x3d, y3d, 0, elevacao_cam5, azimute_cam5);
+})
+
+// Linha dos Nodos (Eixo X) - Intersecção entre o equador e a órbita
+linha_nodos_sim5 = [
+  projetar3D_sim5(-a_fixo_sim5 - 2, 0, 0, elevacao_cam5, azimute_cam5),
+  projetar3D_sim5(a_fixo_sim5 + 2, 0, 0, elevacao_cam5, azimute_cam5)
+]
+
+centro_terra_sim5 = projetar3D_sim5(0, 0, 0, elevacao_cam5, azimute_cam5)
+
+// Linha que aponta da Terra direto para o Perigeu
+vetor_perigeu = [
+  centro_terra_sim5,
+  dados_orbita_arg[0] // O índice 0 (E=0) é sempre o perigeu!
+]
+
+Plot.plot({
+  grid: true, width: 700, height: 450,
+  color: { 
+    legend: true, 
+    domain: ["Terra", "Plano Equatorial", "Linha dos Nodos", "Órbita", "Posição do Perigeu"], 
+    range: ["#2b83ba", "#cccccc", "#2ca02c", "#888888", "#d62728"] 
+  },
+  x: {domain: [-9, 9], label: "Projeção Horizontal da Câmera"},
+  y: {domain: [-9, 9], label: "Projeção Vertical da Câmera"},
+  marks: [
+    Plot.line(dados_equador_sim5, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
+    Plot.line(linha_nodos_sim5, {x: "x_tela", y: "y_tela", stroke: "#2ca02c", strokeWidth: 2, strokeDasharray: "2 2"}),
+    Plot.line(dados_orbita_arg, {x: "x_tela", y: "y_tela", stroke: "#888888", strokeWidth: 2, strokeDasharray: "4 4"}),
+    
+    // Vetor apontando para o perigeu
+    Plot.line(vetor_perigeu, {x: "x_tela", y: "y_tela", stroke: "#d62728", strokeWidth: 2}),
+    
+    // Pontos e marcações
+    Plot.dot([{x: centro_terra_sim5.x_tela, y: centro_terra_sim5.y_tela, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.dot([{x: dados_orbita_arg[0].x_tela, y: dados_orbita_arg[0].y_tela, tipo: "Posição do Perigeu"}], {x: "x", y: "y", r: 6, fill: "tipo"}),
+    
+    // Entradas invisíveis para gerar a legenda corretamente
+    Plot.dot([{x: 0, y: 0, tipo: "Plano Equatorial"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Linha dos Nodos"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Órbita"}], {x: "x", y: "y", r: 0, fill: "tipo"})
+  ]
+})
+```
+# Dinâmica Temporal e Posição Instantânea
+
+## A Anomalia Verdadeira ($\nu$) e o Movimento em Órbita
+```{ojs}
+//| label: controles-sim6
+viewof nu_graus = Inputs.range([0, 360], {
+  value: 45, step: 1, label: "Anomalia Verdadeira (graus)"
+})
+
+//| label: grafico-sim6
+
+a_fixo_sim6 = 5
+
+e_fixo_sim6 = 0.6
+
+dados_orbita_nu = angulos_globais.map(function(E) {
+  return {
+    x: (a_fixo_sim6 * Math.cos(E)) - (a_fixo_sim6 * e_fixo_sim6),
+    y: a_fixo_sim6 * Math.sqrt(1 - Math.pow(e_fixo_sim6, 2)) * Math.sin(E)
+  }
+})
+
+nu_rad = nu_graus * Math.PI / 180
+
+r_nu = (a_fixo_sim6 * (1 - Math.pow(e_fixo_sim6, 2))) / (1 + e_fixo_sim6 * Math.cos(nu_rad))
+
+pos_satelite_nu = ({
+  x: r_nu * Math.cos(nu_rad),
+  y: r_nu * Math.sin(nu_rad)
+})
+
+linha_perigeu_sim6 = [
+  {x: 0, y: 0},
+  {x: a_fixo_sim6 * (1 - e_fixo_sim6), y: 0}
+]
+
+vetor_satelite_sim6 = [
+  {x: 0, y: 0},
+  pos_satelite_nu
+]
+
+Plot.plot({
+  grid: true, width: 700, height: 450,
+  color: { 
+    legend: true, 
+    domain: ["Terra", "Satélite", "Órbita", "Vetor Posição (r)", "Linha do Perigeu (Ref)"],
+    range: ["#2b83ba", "#444444", "#888888", "#9467bd", "#d62728"]
+  },
+  x: {domain: [-10, 8], label: "Distância X (R_T)"},
+  y: {domain: [-8, 8], label: "Distância Y (R_T)"},
+  marks: [
+    Plot.line(dados_orbita_nu, {x: "x", y: "y", stroke: "#888888", strokeWidth: 1.5, strokeDasharray: "4 4"}),
+    
+    Plot.line(linha_perigeu_sim6, {x: "x", y: "y", stroke: "#d62728", strokeWidth: 2}),
+    Plot.line(vetor_satelite_sim6, {x: "x", y: "y", stroke: "#9467bd", strokeWidth: 2}),
+    
+    Plot.dot([{x: 0, y: 0, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.dot([{x: pos_satelite_nu.x, y: pos_satelite_nu.y, tipo: "Satélite"}], {x: "x", y: "y", r: 6, fill: "tipo"}),
+    
+    Plot.dot([{x: 0, y: 0, tipo: "Órbita"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Vetor Posição (r)"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Linha do Perigeu (Ref)"}], {x: "x", y: "y", r: 0, fill: "tipo"})
+  ]
+})
+```
+# Regimes de Órbitas Terrestres e Aplicações Aeroespaciais
+
+## Análise Comparativa – LEO, MEO, GEO e Polar
+```{ojs}
+//| label: controles-sim7
+viewof alt_km = Inputs.range([160, 36000], {
+  value: 1000, step: 100, label: "Altitude do Satélite (km)"
+})
+
+//| label: grafico-sim7
+
+raio_terra_km = 6371
+
+// Converte a altitude para unidades de Raios Terrestres (R_T) para manter a escala da tela
+r_satelite = 1 + (alt_km / raio_terra_km)
+
+dados_orbita_alt = angulos_globais.map(function(E) {
+  return {
+    x: r_satelite * Math.cos(E),
+    y: r_satelite * Math.sin(E)
+  }
+})
+
+// Limite superior da LEO (2.000 km)
+r_leo = 1 + (2000 / raio_terra_km)
+
+limite_leo_sim7 = angulos_globais.map(function(E) {
+  return { x: r_leo * Math.cos(E), y: r_leo * Math.sin(E) }
+})
+
+// Altitude GEO (35.786 km)
+r_geo = 1 + (35786 / raio_terra_km)
+
+limite_geo_sim7 = angulos_globais.map(function(E) {
+  return { x: r_geo * Math.cos(E), y: r_geo * Math.sin(E) }
+})
+
+// Determina o texto e a cor do regime atual baseado na altitude
+regime_texto = alt_km <= 2000 ? "Regime Atual: LEO (Baixa Órbita)" : (alt_km < 35700 ? "Regime Atual: MEO (Órbita Média)" : "Regime Atual: GEO (Geoestacionária)")
+
+cor_regime = alt_km <= 2000 ? "#2ca02c" : (alt_km < 35700 ? "#ff7f0e" : "#d62728")
+
+Plot.plot({
+  grid: true, width: 700, height: 500,
+  color: { 
+    legend: true, 
+    domain: ["Terra", "Órbita do Satélite", "Limite LEO (2.000 km)", "Órbita GEO (35.786 km)"],
+    range: ["#2b83ba", "#888888", "#2ca02c", "#d62728"]
+  },
+  x: {domain: [-8, 8], label: "Distância X (Raios Terrestres)"},
+  y: {domain: [-8, 8], label: "Distância Y (Raios Terrestres)"},
+  marks: [
+    // Desenha as linhas de referência de LEO e GEO
+    Plot.line(limite_leo_sim7, {x: "x", y: "y", stroke: "#2ca02c", strokeWidth: 1.5, strokeDasharray: "2 2"}),
+    Plot.line(limite_geo_sim7, {x: "x", y: "y", stroke: "#d62728", strokeWidth: 1.5, strokeDasharray: "2 2"}),
+    
+    // Rastro da órbita do satélite
+    Plot.line(dados_orbita_alt, {x: "x", y: "y", stroke: "#888888", strokeWidth: 2}),
+    
+    // Terra
+    Plot.dot([{x: 0, y: 0, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    
+    // Satélite mudando de cor dependendo da altitude
+    Plot.dot([{x: dados_orbita_alt[0].x, y: dados_orbita_alt[0].y}], {x: "x", y: "y", r: 6, fill: cor_regime}),
+    
+    // Texto dinâmico no topo do gráfico exibindo o regime
+    Plot.text([{x: 0, y: 7}], {x: "x", y: "y", text: () => regime_texto, fontSize: 16, fontWeight: "bold", fill: cor_regime}),
+    
+    // Pontos fantasmas apenas para a legenda superior
+    Plot.dot([{x: 0, y: 0, tipo: "Limite LEO (2.000 km)"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Órbita GEO (35.786 km)"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Órbita do Satélite"}], {x: "x", y: "y", r: 0, fill: "tipo"})
+  ]
+})
+```
+
+```{ojs}
+//| label: controles-sim8
+viewof i_polar_graus = Inputs.range([80, 90], {
+  value: 85, step: 0.1, label: "Inclinação Polar (graus)"
+})
+
+viewof elevacao_cam8 = Inputs.range([0, 90], {
+  value: 15, step: 1, label: "Elevação da Câmera (graus)"
+})
+
+viewof azimute_cam8 = Inputs.range([0, 360], {
+  value: 45, step: 1, label: "Azimute da Câmera (graus)"
+})
+
+//| label: grafico-sim8
+
+a_fixo_sim8 = 5
+
+projetar3D_sim8 = function(x, y, z, elev_deg, azim_deg) {
+  let el = elev_deg * Math.PI / 180
+  let az = azim_deg * Math.PI / 180
+  
+  let x_rot = x * Math.cos(az) - y * Math.sin(az)
+  let y_rot = x * Math.sin(az) + y * Math.cos(az)
+  
+  let x_tela = x_rot
+  let y_tela = z * Math.cos(el) + y_rot * Math.sin(el)
+  
+  return {x_tela, y_tela}
+}
+
+dados_orbita_polar = angulos_globais.map(function(E) {
+  let x_plano = a_fixo_sim8 * Math.cos(E)
+  let y_plano = a_fixo_sim8 * Math.sin(E)
+  
+  let i_rad = i_polar_graus * Math.PI / 180
+  
+  let x3d = x_plano
+  let y3d = y_plano * Math.cos(i_rad)
+  let z3d = y_plano * Math.sin(i_rad)
+  
+  return projetar3D_sim8(x3d, y3d, z3d, elevacao_cam8, azimute_cam8)
+})
+
+dados_equador_sim8 = angulos_globais.map(function(E) {
+  let x3d = (a_fixo_sim8 + 1.5) * Math.cos(E)
+  let y3d = (a_fixo_sim8 + 1.5) * Math.sin(E)
+  return projetar3D_sim8(x3d, y3d, 0, elevacao_cam8, azimute_cam8)
+})
+
+// Linha representando o eixo de rotação da Terra (Polos Norte e Sul)
+eixo_polar_sim8 = [
+  projetar3D_sim8(0, 0, -a_fixo_sim8 - 2, elevacao_cam8, azimute_cam8),
+  projetar3D_sim8(0, 0, a_fixo_sim8 + 2, elevacao_cam8, azimute_cam8)
+]
+
+centro_terra_sim8 = projetar3D_sim8(0, 0, 0, elevacao_cam8, azimute_cam8)
+
+Plot.plot({
+  grid: true, width: 700, height: 450,
+  color: { 
+    legend: true, 
+    domain: ["Terra", "Órbita Polar", "Plano Equatorial", "Eixo dos Polos"], 
+    range: ["#2b83ba", "#888888", "#cccccc", "#17becf"] 
+  },
+  x: {domain: [-9, 9], label: "Projeção Horizontal da Câmera"},
+  y: {domain: [-9, 9], label: "Projeção Vertical da Câmera"},
+  marks: [
+    Plot.line(dados_equador_sim8, {x: "x_tela", y: "y_tela", stroke: "#cccccc", strokeWidth: 2}),
+    Plot.line(eixo_polar_sim8, {x: "x_tela", y: "y_tela", stroke: "#17becf", strokeWidth: 2, strokeDasharray: "2 2"}),
+    Plot.line(dados_orbita_polar, {x: "x_tela", y: "y_tela", stroke: "#888888", strokeWidth: 2, strokeDasharray: "4 4"}),
+    
+    Plot.dot([{x: centro_terra_sim8.x_tela, y: centro_terra_sim8.y_tela, tipo: "Terra"}], {x: "x", y: "y", r: 15, fill: "tipo"}),
+    Plot.dot([{x: dados_orbita_polar[0].x_tela, y: dados_orbita_polar[0].y_tela, tipo: "Órbita Polar"}], {x: "x", y: "y", r: 6, fill: "tipo"}),
+    
+    Plot.dot([{x: 0, y: 0, tipo: "Plano Equatorial"}], {x: "x", y: "y", r: 0, fill: "tipo"}),
+    Plot.dot([{x: 0, y: 0, tipo: "Eixo dos Polos"}], {x: "x", y: "y", r: 0, fill: "tipo"})
+  ]
+})
+```
+
+# Aplicação Realista e Rastreamento de Satélites
+
+```{ojs}
+//| label: controles
+viewof t_max = Inputs.number({label: "Tempo de Simulação (T_MAX)", value: 20000, step: 100})
+
+// Inclinação da Órbita
+viewof inc_graus = Inputs.range([0, 180], {label: "Inclinação da Órbita (graus)", value: 45, step: 1})
+
+// Posição Inicial (km)
+viewof rx = Inputs.number({label: "X inicial (km)", value: 7000})
+viewof ry = Inputs.number({label: "Y inicial (km)", value: 0})
+viewof rz = Inputs.number({label: "Z inicial (km)", value: 0}) 
+
+// Velocidade Inicial (km/s)
+viewof vx = Inputs.number({label: "Vx inicial (km/s)", value: 0})
+viewof vy = Inputs.number({label: "Vy inicial (km/s)", value: 8.2663})
+viewof vz = Inputs.number({label: "Vz inicial (km/s)", value: 0})
+```
+
+```{ojs}
+//| label: painel-botoes
+viewof acao_botoes = {
+  const form = html`
+    <div style="display: flex; gap: 15px; margin-top: 15px; margin-bottom: 20px;">
+      <button id="btn-sim" style="padding: 10px 20px; font-weight: bold; background: #1f77b4; color: white; border: none; border-radius: 5px; cursor: pointer;">▶ Simular Órbita</button>
+      <button id="btn-res" style="padding: 10px 20px; font-weight: bold; background: #d62728; color: white; border: none; border-radius: 5px; cursor: pointer;">⏹ Resetar Gráfico</button>
+    </div>
+  `;
+  
+  form.querySelector("#btn-sim").onclick = () => {
+    form.value = "simular";
+    form.dispatchEvent(new CustomEvent("input"));
+  };
+  
+  form.querySelector("#btn-res").onclick = () => {
+    form.value = "reset";
+    form.dispatchEvent(new CustomEvent("input"));
+  };
+  
+  form.value = "reset"; // O gráfico começa limpo por padrão
+  return form;
+}
+```
+
+```{ojs}
+//| label: import-plotly
+Plotly = require("plotly.js-dist@2")
+
+//| label: grafico-3d
+grafico_3d = {
+  let container = html`<div style="width: 100%; height: 600px;"></div>`;
+  
+  // Se o estado for reset, desenhamos apenas a Terra vazia
+  if (dados_simulacao.length === 0) {
+    let trace_terra_vazia = {
+      x: [0], y: [0], z: [0],
+      mode: 'markers', type: 'scatter3d', name: 'Terra',
+      marker: { color: '#2b83ba', size: 10 }
+    };
+    let layout_vazio = {
+      margin: { l: 0, r: 0, b: 0, t: 10 },
+      scene: {
+        xaxis: { title: 'X (km)', range: [-10000, 10000] },
+        yaxis: { title: 'Y (km)', range: [-10000, 10000] },
+        zaxis: { title: 'Z (km)', range: [-10000, 10000] },
+        aspectmode: 'cube'
+      },
+      annotations: [{
+        text: "Aguardando Simulação...",
+        showarrow: false,
+        x: 0.5, y: 0.9, xref: 'paper', yref: 'paper',
+        font: {size: 16, color: 'gray'}
+      }]
+    };
+    Plotly.newPlot(container, [trace_terra_vazia], layout_vazio);
+    return container;
+  }
+
+  // Se houver dados, desenha a órbita completa
+  let x_vals = dados_simulacao.map(d => d.x);
+  let y_vals = dados_simulacao.map(d => d.y);
+  let z_vals = dados_simulacao.map(d => d.z);
+
+  let trace_orbita = {
+    x: x_vals, y: y_vals, z: z_vals,
+    mode: 'lines', type: 'scatter3d', name: 'Trajetória',
+    line: { color: '#888888', width: 4 }
+  };
+
+  let trace_terra = {
+    x: [0], y: [0], z: [0],
+    mode: 'markers', type: 'scatter3d', name: 'Terra',
+    marker: { color: '#2b83ba', size: 10 }
+  };
+  
+  let trace_inicio = {
+    x: [x_vals[0]], y: [y_vals[0]], z: [z_vals[0]],
+    mode: 'markers', type: 'scatter3d', name: 'Ponto Inicial',
+    marker: { color: 'gray', size: 5 }
+  };
+
+  let layout = {
+    margin: { l: 0, r: 0, b: 0, t: 10 },
+    scene: {
+      xaxis: { title: 'X (km)' },
+      yaxis: { title: 'Y (km)' },
+      zaxis: { title: 'Z (km)' },
+      aspectmode: 'data'
+    }
+  };
+
+  Plotly.newPlot(container, [trace_orbita, trace_terra, trace_inicio], layout);
+  return container;
+}
+```
+
+```{ojs}
+//| label: motor-matematico
+
+dados_simulacao = {
+  // Se o botão de reset for clicado, encerra a função e retorna vazio
+  if (acao_botoes === "reset") {
+    return [];
+  }
+
+  // Lemos os valores usando '.value' da raiz do DOM para evitar reatividade automática ao digitar
+  let v_tmax = viewof t_max.value;
+  let v_inc = viewof inc_graus.value;
+  let v_rx = viewof rx.value;
+  let v_ry = viewof ry.value;
+  let v_rz = viewof rz.value;
+  let v_vx = viewof vx.value;
+  let v_vy = viewof vy.value;
+  let v_vz = viewof vz.value;
+
+  let inc_rad = v_inc * Math.PI / 180;
+  
+  let r0_x = v_rx;
+  let r0_y = (v_ry * Math.cos(inc_rad)) - (v_rz * Math.sin(inc_rad));
+  let r0_z = (v_ry * Math.sin(inc_rad)) + (v_rz * Math.cos(inc_rad));
+
+  let v0_x = v_vx;
+  let v0_y = (v_vy * Math.cos(inc_rad)) - (v_vz * Math.sin(inc_rad));
+  let v0_z = (v_vy * Math.sin(inc_rad)) + (v_vz * Math.cos(inc_rad));
+
+  const mu = 398600.0;
+
+  const f_add = (a, b) => a.map((v, i) => v + b[i]);
+  const f_sub = (a, b) => a.map((v, i) => v - b[i]);
+  const f_mul = (a, s) => a.map(v => v * s);
+  const f_mag = (a) => Math.sqrt(a.reduce((acc, v) => acc + v * v, 0));
+
+  const v_sum = (...vecs) => {
+    let res = [...vecs[0]];
+    for(let i = 1; i < vecs.length; i++){
+      for(let j = 0; j < res.length; j++){
+        res[j] += vecs[i][j];
+      }
+    }
+    return res;
+  };
+
+  const f_acel = (st) => {
+    let r = [st[0], st[1], st[2]];
+    let v = [st[3], st[4], st[5]];
+    let mag = f_mag(r);
+    if (mag === 0) throw new Error("Colisão!");
+    
+    let fat = -mu / Math.pow(mag, 3);
+    let a = f_mul(r, fat);
+    return [...v, ...a];
+  };
+
+  const step_rk = (y_in, h_in) => {
+    let k1 = f_mul(f_acel(y_in), h_in);
+    let k2 = f_mul(f_acel(v_sum(y_in, f_mul(k1, 1/4))), h_in);
+    let k3 = f_mul(f_acel(v_sum(y_in, f_mul(k1, 3/32), f_mul(k2, 9/32))), h_in);
+    let k4 = f_mul(f_acel(v_sum(y_in, f_mul(k1, 1932/2197), f_mul(k2, -7200/2197), f_mul(k3, 7296/2197))), h_in);
+    let k5 = f_mul(f_acel(v_sum(y_in, f_mul(k1, 439/216), f_mul(k2, -8), f_mul(k3, 3680/513), f_mul(k4, -845/4104))), h_in);
+    let k6 = f_mul(f_acel(v_sum(y_in, f_mul(k1, -8/27), f_mul(k2, 2), f_mul(k3, -3544/2565), f_mul(k4, 1859/4104), f_mul(k5, -11/40))), h_in);
+
+    let w_out = v_sum(y_in, f_mul(k1, 25/216), f_mul(k3, 1408/2565), f_mul(k4, 2197/4104), f_mul(k5, -1/5));
+    let q_out = v_sum(y_in, f_mul(k1, 16/135), f_mul(k3, 6656/12825), f_mul(k4, 28561/56430), f_mul(k5, -9/50), f_mul(k6, 2/55));
+    
+    return { w_out, q_out };
+  };
+
+  let tol = 1e-9;
+  let state = [r0_x, r0_y, r0_z, v0_x, v0_y, v0_z];
+  let t_curr = 0;
+  let h_curr = 10.0;
+  let max_it = 10000;
+  let it = 0;
+  
+  let res = [];
+  
+  while (t_curr < v_tmax && it < max_it) {
+    let { w_out, q_out } = step_rk(state, h_curr);
+    let diff = f_mag(f_sub(w_out, q_out));
+    let scale = Math.max(f_mag(state), 1e-8);
+    let err = diff / scale;
+    
+    if (err > tol) {
+      h_curr = 0.9 * h_curr * Math.pow(tol / err, 0.2);
+      continue;
+    }
+    
+    state = q_out;
+    t_curr += h_curr;
+    it++;
+    
+    if (err < 0.1 * tol) h_curr *= 2.0;
+    if (t_curr + h_curr > v_tmax) h_curr = v_tmax - t_curr;
+    
+    res.push({
+      t: t_curr,
+      x: state[0], y: state[1], z: state[2]
+    });
+  }
+  
+  return res;
+}
+```
